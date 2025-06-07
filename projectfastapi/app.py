@@ -22,6 +22,28 @@ def read_root():
     return {'message': 'Hello World!'}
 
 
+@app.get('/users/', status_code=HTTPStatus.OK, response_model=UserList)
+def read_users(
+    limit: int = 10, offset: int = 0, session: Session = Depends(get_session)
+):
+    users = session.scalars(select(User).limit(limit).offset(offset))
+    return {'users': users}
+
+
+@app.get(
+    '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserPublic
+)
+def get_user(user_id: int, session: Session = Depends(get_session)):
+    user_db = session.scalar(select(User).where(User.id == user_id))
+
+    if not user_db:
+        raise HTTPException(
+            detail='User not found', status_code=HTTPStatus.NOT_FOUND
+        )
+
+    return user_db
+
+
 @app.post('/users/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
 def create_user(user: UserSchema, session=Depends(get_session)):
     db_user = session.scalar(
@@ -52,14 +74,6 @@ def create_user(user: UserSchema, session=Depends(get_session)):
     session.refresh(db_user)
 
     return db_user
-
-
-@app.get('/users/', status_code=HTTPStatus.OK, response_model=UserList)
-def read_users(
-    limit: int = 10, offset: int = 0, session: Session = Depends(get_session)
-):
-    users = session.scalars(select(User).limit(limit).offset(offset))
-    return {'users': users}
 
 
 @app.put(

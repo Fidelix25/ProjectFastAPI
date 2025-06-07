@@ -88,3 +88,21 @@ def test_update_integrity_error(client, user):
 
     assert response.status_code == HTTPStatus.CONFLICT
     assert response.json() == {'detail': 'Usermame or Email already exists'}
+
+
+def test_get_user(client, user):
+    response = client.get(f'/users/{user.id}')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'username': user.username,
+        'email': user.email,
+        'id': user.id,
+    }
+
+
+def test_get_user_not_found(client):
+    response = client.get('/users/123')
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'User not found'}
